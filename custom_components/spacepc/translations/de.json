@@ -1,0 +1,35 @@
+{
+  "title": "SpacePC",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Mit einem SpacePC-Gerät verbinden",
+        "description": "Gib den lokalen Hostnamen oder die IP-Adresse deines SpacePC-Geräts ein.",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "api_token": "Geräte-Token (optional)"
+        }
+      },
+      "confirm": {
+        "title": "{name} hinzufügen",
+        "description": "Möchtest du {name} zu Home Assistant hinzufügen?",
+        "data": {
+          "api_token": "Geräte-Token"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung fehlgeschlagen. Prüfe, ob das Gerät online und erreichbar ist.",
+      "invalid_auth": "Das Geräte-Token ist ungültig.",
+      "unsupported_api": "Dieses Gerät verwendet eine nicht unterstützte SpacePC-API-Version."
+    },
+    "abort": {
+      "already_configured": "Dieses SpacePC-Gerät ist bereits eingerichtet.",
+      "cannot_connect": "Das gefundene Gerät konnte nicht erreicht werden.",
+      "invalid_discovery": "Die Erkennungsdaten sind unvollständig.",
+      "unsupported_api": "Dieses Gerät verwendet eine nicht unterstützte SpacePC-API-Version."
+    }
+  }
+}
+

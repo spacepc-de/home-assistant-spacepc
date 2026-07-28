@@ -1,0 +1,35 @@
+{
+  "title": "SpacePC",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to a SpacePC device",
+        "description": "Enter the local hostname or IP address of your SpacePC device.",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "api_token": "Device token (optional)"
+        }
+      },
+      "confirm": {
+        "title": "Add {name}",
+        "description": "Do you want to add {name} to Home Assistant?",
+        "data": {
+          "api_token": "Device token"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect. Check that the device is online and reachable.",
+      "invalid_auth": "The device token is invalid.",
+      "unsupported_api": "This device uses an unsupported SpacePC API version."
+    },
+    "abort": {
+      "already_configured": "This SpacePC device is already configured.",
+      "cannot_connect": "The discovered device could not be reached.",
+      "invalid_discovery": "The discovery information is incomplete.",
+      "unsupported_api": "This device uses an unsupported SpacePC API version."
+    }
+  }
+}
+
