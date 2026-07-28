@@ -1,4 +1,10 @@
-# SpacePC for Home Assistant
+<p align="center">
+  <a href="https://spacepc.dev">
+    <img src="assets/spacepc-logo.png" alt="SpacePC.dev" width="520">
+  </a>
+</p>
+
+<h1 align="center">SpacePC for Home Assistant</h1>
 
 Local-first Home Assistant integration for SpacePC devices.
 
@@ -57,4 +63,3 @@ pytest
 ## License
 
 MIT
-
