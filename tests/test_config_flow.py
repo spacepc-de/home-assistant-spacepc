@@ -109,3 +109,41 @@ async def test_rediscovery_updates_connection_data(
     assert result["reason"] == "already_configured"
     assert entry.data[CONF_HOST] == "spacepc-aabbcc.local"
     assert entry.data[CONF_PORT] == 8080
+
+
+async def test_rediscovery_reloads_unchanged_device_capabilities(
+    hass: HomeAssistant,
+    mock_spacepc_client: object,
+) -> None:
+    """A reboot announcement reloads names and newly configured entities."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="spacepc-aabbcc",
+        data={CONF_HOST: "spacepc-aabbcc.local", CONF_PORT: 80},
+    )
+    entry.add_to_hass(hass)
+    discovery = ZeroconfServiceInfo(
+        ip_address=IPv4Address("192.168.2.28"),
+        ip_addresses=[IPv4Address("192.168.2.28")],
+        hostname="spacepc-aabbcc.local.",
+        name="Workshop sensor._spacepc._tcp.local.",
+        port=80,
+        properties={"api": "1", "id": "spacepc-aabbcc"},
+        type="_spacepc._tcp.local.",
+    )
+
+    with patch.object(
+        hass.config_entries,
+        "async_reload",
+        return_value=True,
+    ) as async_reload:
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": SOURCE_ZEROCONF},
+            data=discovery,
+        )
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "already_configured"
+    async_reload.assert_called_once_with(entry.entry_id)

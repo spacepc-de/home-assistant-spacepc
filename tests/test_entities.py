@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 
+from custom_components.spacepc.helpers import entities_for_platform
 from custom_components.spacepc.models import DeviceInfo, DeviceState
 from custom_components.spacepc.sensor import SpacePCSensor
 
@@ -45,3 +46,24 @@ def test_entity_is_unavailable_when_device_or_sensor_is_offline(
 
     entity = SpacePCSensor(coordinator, device_info.entities[0])
     assert not entity.available
+
+
+def test_multiple_named_sensors_are_created_independently(
+    device_info: DeviceInfo,
+    device_state: DeviceState,
+) -> None:
+    """Every sensor definition becomes its own Home Assistant entity."""
+    coordinator = MagicMock()
+    coordinator.device_info = device_info
+    coordinator.data = device_state
+    coordinator.last_update_success = True
+    coordinator.async_add_listener.return_value = MagicMock()
+
+    entities = entities_for_platform(coordinator, "sensor", SpacePCSensor)
+
+    assert [entity.name for entity in entities] == [
+        "Room temperature",
+        "Outside temperature",
+    ]
+    assert entities[0].available
+    assert not entities[1].available

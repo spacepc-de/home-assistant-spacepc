@@ -46,6 +46,30 @@ class SpacePCConfigFlow(ConfigFlow, domain=DOMAIN):
         discovered_host = _discovery_host(discovery_info)
         discovered_port = discovery_info.port or DEFAULT_PORT
         await self.async_set_unique_id(device_id)
+        existing_entry = next(
+            (
+                entry
+                for entry in self._async_current_entries()
+                if entry.unique_id == device_id
+            ),
+            None,
+        )
+        if existing_entry is not None:
+            updated_data = {
+                **existing_entry.data,
+                CONF_HOST: discovered_host,
+                CONF_PORT: discovered_port,
+            }
+            if updated_data != existing_entry.data:
+                self.hass.config_entries.async_update_entry(
+                    existing_entry,
+                    data=updated_data,
+                )
+            else:
+                self.hass.async_create_task(
+                    self.hass.config_entries.async_reload(existing_entry.entry_id),
+                )
+            return self.async_abort(reason="already_configured")
         self._abort_if_unique_id_configured(
             updates={CONF_HOST: discovered_host, CONF_PORT: discovered_port}
         )
