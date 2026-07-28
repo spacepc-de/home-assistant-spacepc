@@ -8,6 +8,9 @@
 
 Local-first Home Assistant integration for SpacePC devices.
 
+[![HACS validation](https://github.com/spacepc-de/home-assistant-spacepc/actions/workflows/hacs.yml/badge.svg)](https://github.com/spacepc-de/home-assistant-spacepc/actions/workflows/hacs.yml)
+[![Hassfest](https://github.com/spacepc-de/home-assistant-spacepc/actions/workflows/hassfest.yml/badge.svg)](https://github.com/spacepc-de/home-assistant-spacepc/actions/workflows/hassfest.yml)
+
 SpacePC devices are discovered over mDNS and communicate with Home Assistant
 through the versioned local SpacePC HTTP API. MQTT remains available as an
 optional interface for users and systems outside Home Assistant, but it is not
@@ -15,8 +18,7 @@ required by this integration.
 
 ## Status
 
-This repository is an initial development release. The integration and the
-device API contract are not yet stable. Do not treat it as production-ready.
+Version 0.1.x is the first stable SpacePC Local API v1 integration series.
 
 ## Features
 
@@ -39,14 +41,21 @@ current DHCP address. If discovery updates connection data, the integration
 rebuilds its API client and requests fresh state without restarting Home
 Assistant.
 
-## Installation for development
+## Installation with HACS
+
+Open the repository directly in HACS:
+
+[Add SpacePC to HACS](https://my.home-assistant.io/redirect/hacs_repository/?owner=spacepc-de&repository=home-assistant-spacepc&category=integration)
+
+Alternatively, add this repository as a custom HACS integration repository,
+install SpacePC, restart Home Assistant and add **SpacePC** from
+**Settings → Devices & services**.
+
+## Manual installation
 
 Copy `custom_components/spacepc` to the `custom_components` directory in your
 Home Assistant configuration and restart Home Assistant. Then open
 **Settings → Devices & services → Add integration → SpacePC**.
-
-HACS distribution is planned after the first compatible device firmware is
-released.
 
 ## Device compatibility
 
@@ -57,10 +66,11 @@ integration.
 
 ## Development
 
-The project targets Home Assistant 2026.7 and Python 3.14.
+The integration supports Home Assistant 2026.5 or newer. Development and CI
+currently target Home Assistant 2026.7 and Python 3.14.
 
 ```bash
-python -m pip install homeassistant==2026.7.2 mypy pytest pytest-asyncio ruff
+python -m pip install pytest-homeassistant-custom-component==0.13.348 mypy ruff
 ruff check .
 mypy
 pytest
