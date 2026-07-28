@@ -20,6 +20,9 @@ class SpacePCDataUpdateCoordinator(DataUpdateCoordinator[DeviceState]):
         hass: HomeAssistant,
         client: SpacePCClient,
         device_info: DeviceInfo,
+        *,
+        ip_address: str | None,
+        configuration_url: str,
     ) -> None:
         super().__init__(
             hass,
@@ -29,6 +32,8 @@ class SpacePCDataUpdateCoordinator(DataUpdateCoordinator[DeviceState]):
         )
         self.client = client
         self.device_info = device_info
+        self.ip_address = ip_address
+        self.configuration_url = configuration_url
 
     async def _async_update_data(self) -> DeviceState:
         try:

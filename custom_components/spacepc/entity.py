@@ -32,6 +32,7 @@ class SpacePCEntity(CoordinatorEntity[SpacePCDataUpdateCoordinator]):
             manufacturer=info.manufacturer,
             model=info.model,
             sw_version=info.firmware.version,
+            configuration_url=coordinator.configuration_url,
         )
 
     @property

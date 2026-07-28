@@ -10,6 +10,7 @@ DEFAULT_SCAN_INTERVAL_SECONDS: Final = 30
 SUPPORTED_API_VERSION: Final = 1
 
 CONF_API_TOKEN: Final = "api_token"
+CONF_IP_ADDRESS: Final = "ip_address"
 
 PLATFORMS: Final = (
     Platform.SENSOR,

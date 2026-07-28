@@ -8,7 +8,11 @@ from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 
 from custom_components.spacepc.helpers import entities_for_platform
 from custom_components.spacepc.models import DeviceInfo, DeviceState
-from custom_components.spacepc.sensor import SpacePCSensor
+from custom_components.spacepc.sensor import (
+    IP_ADDRESS_DEFINITION,
+    SpacePCIPAddressSensor,
+    SpacePCSensor,
+)
 
 
 def test_sensor_maps_value_and_metadata(
@@ -20,6 +24,8 @@ def test_sensor_maps_value_and_metadata(
     coordinator.device_info = device_info
     coordinator.data = device_state
     coordinator.last_update_success = True
+    coordinator.ip_address = "192.168.2.28"
+    coordinator.configuration_url = "http://192.168.2.28"
     coordinator.async_add_listener.return_value = MagicMock()
     coordinator.async_request_refresh = AsyncMock()
 
@@ -31,6 +37,7 @@ def test_sensor_maps_value_and_metadata(
     assert entity.device_class is SensorDeviceClass.TEMPERATURE
     assert entity.state_class is SensorStateClass.MEASUREMENT
     assert entity.available
+    assert str(entity.device_info["configuration_url"]) == "http://192.168.2.28"
 
 
 def test_entity_is_unavailable_when_device_or_sensor_is_offline(
@@ -42,6 +49,8 @@ def test_entity_is_unavailable_when_device_or_sensor_is_offline(
     coordinator.device_info = device_info
     coordinator.data = device_state
     coordinator.last_update_success = False
+    coordinator.ip_address = "192.168.2.28"
+    coordinator.configuration_url = "http://192.168.2.28"
     coordinator.async_add_listener.return_value = MagicMock()
 
     entity = SpacePCSensor(coordinator, device_info.entities[0])
@@ -57,6 +66,8 @@ def test_multiple_named_sensors_are_created_independently(
     coordinator.device_info = device_info
     coordinator.data = device_state
     coordinator.last_update_success = True
+    coordinator.ip_address = "192.168.2.28"
+    coordinator.configuration_url = "http://192.168.2.28"
     coordinator.async_add_listener.return_value = MagicMock()
 
     entities = entities_for_platform(coordinator, "sensor", SpacePCSensor)
@@ -67,3 +78,23 @@ def test_multiple_named_sensors_are_created_independently(
     ]
     assert entities[0].available
     assert not entities[1].available
+
+
+def test_ip_address_diagnostic_sensor(
+    device_info: DeviceInfo,
+    device_state: DeviceState,
+) -> None:
+    """The device IP is visible and shares the clickable device URL."""
+    coordinator = MagicMock()
+    coordinator.device_info = device_info
+    coordinator.data = device_state
+    coordinator.last_update_success = True
+    coordinator.ip_address = "192.168.2.28"
+    coordinator.configuration_url = "http://192.168.2.28"
+    coordinator.async_add_listener.return_value = MagicMock()
+
+    entity = SpacePCIPAddressSensor(coordinator, IP_ADDRESS_DEFINITION)
+
+    assert entity.native_value == "192.168.2.28"
+    assert entity.available
+    assert str(entity.device_info["configuration_url"]) == "http://192.168.2.28"
