@@ -39,7 +39,15 @@ def device_info() -> DeviceInfo:
         entities=(
             EntityDefinition(
                 entity_id="temperature",
-                name="Temperature",
+                name="Room temperature",
+                platform="sensor",
+                device_class="temperature",
+                state_class="measurement",
+                unit="°C",
+            ),
+            EntityDefinition(
+                entity_id="temperature_2",
+                name="Outside temperature",
                 platform="sensor",
                 device_class="temperature",
                 state_class="measurement",
@@ -61,6 +69,7 @@ def device_state() -> DeviceState:
     return DeviceState(
         entities={
             "temperature": EntityState(value=23.5),
+            "temperature_2": EntityState(value=None, available=False),
             "connected": EntityState(value=True),
         },
         diagnostics={"wifi_rssi": -54},

@@ -57,10 +57,8 @@ async def _async_update_listener(
     hass: HomeAssistant,
     entry: SpacePCConfigEntry,
 ) -> None:
-    """Apply a discovered host or port change without restarting Home Assistant."""
-    coordinator = entry.runtime_data.coordinator
-    coordinator.client = _create_client(hass, entry)
-    await coordinator.async_request_refresh()
+    """Reload connection data and device capabilities after an entry update."""
+    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: SpacePCConfigEntry) -> bool:
