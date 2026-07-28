@@ -12,8 +12,8 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.14"
           cache: pip
@@ -27,4 +27,3 @@ jobs:
         run: pytest
       - name: Validate JSON
         run: python -m json.tool custom_components/spacepc/manifest.json >/dev/null
-
