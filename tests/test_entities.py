@@ -1,0 +1,47 @@
+"""Tests for SpacePC entity state mapping."""
+
+from __future__ import annotations
+
+from unittest.mock import AsyncMock, MagicMock
+
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
+
+from custom_components.spacepc.models import DeviceInfo, DeviceState
+from custom_components.spacepc.sensor import SpacePCSensor
+
+
+def test_sensor_maps_value_and_metadata(
+    device_info: DeviceInfo,
+    device_state: DeviceState,
+) -> None:
+    """Sensor entities expose API value, availability and metadata."""
+    coordinator = MagicMock()
+    coordinator.device_info = device_info
+    coordinator.data = device_state
+    coordinator.last_update_success = True
+    coordinator.async_add_listener.return_value = MagicMock()
+    coordinator.async_request_refresh = AsyncMock()
+
+    entity = SpacePCSensor(coordinator, device_info.entities[0])
+
+    assert entity.unique_id == "spacepc-aabbcc_temperature"
+    assert entity.native_value == 23.5
+    assert entity.native_unit_of_measurement == "°C"
+    assert entity.device_class is SensorDeviceClass.TEMPERATURE
+    assert entity.state_class is SensorStateClass.MEASUREMENT
+    assert entity.available
+
+
+def test_entity_is_unavailable_when_device_or_sensor_is_offline(
+    device_info: DeviceInfo,
+    device_state: DeviceState,
+) -> None:
+    """Coordinator and per-entity availability both affect the entity."""
+    coordinator = MagicMock()
+    coordinator.device_info = device_info
+    coordinator.data = device_state
+    coordinator.last_update_success = False
+    coordinator.async_add_listener.return_value = MagicMock()
+
+    entity = SpacePCSensor(coordinator, device_info.entities[0])
+    assert not entity.available
