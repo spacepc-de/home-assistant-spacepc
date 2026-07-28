@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass, BinarySensorEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
@@ -37,6 +37,11 @@ class SpacePCBinarySensor(SpacePCEntity, BinarySensorEntity):
         return bool(state.value) if state and state.value is not None else None
 
     @property
-    def device_class(self) -> str | None:
+    def device_class(self) -> BinarySensorDeviceClass | None:
         """Return the device class reported by the device."""
-        return self.definition.device_class
+        if self.definition.device_class is None:
+            return None
+        try:
+            return BinarySensorDeviceClass(self.definition.device_class)
+        except ValueError:
+            return None

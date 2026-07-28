@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
@@ -39,11 +39,21 @@ class SpacePCSensor(SpacePCEntity, SensorEntity):
         return self.definition.unit
 
     @property
-    def device_class(self) -> str | None:
+    def device_class(self) -> SensorDeviceClass | None:
         """Return the device class reported by the device."""
-        return self.definition.device_class
+        if self.definition.device_class is None:
+            return None
+        try:
+            return SensorDeviceClass(self.definition.device_class)
+        except ValueError:
+            return None
 
     @property
-    def state_class(self) -> str | None:
+    def state_class(self) -> SensorStateClass | None:
         """Return the state class reported by the device."""
-        return self.definition.state_class
+        if self.definition.state_class is None:
+            return None
+        try:
+            return SensorStateClass(self.definition.state_class)
+        except ValueError:
+            return None
