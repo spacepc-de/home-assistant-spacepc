@@ -8,7 +8,6 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/spacepc-de/home-assistant-spacepc/issues",
   "requirements": [],
-  "version": "0.1.0",
+  "version": "0.1.1",
   "zeroconf": ["_spacepc._tcp.local."]
 }
-
