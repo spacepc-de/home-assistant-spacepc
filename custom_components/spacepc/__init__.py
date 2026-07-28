@@ -11,9 +11,10 @@ from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import SpacePCClient, SpacePCConnectionError
-from .const import CONF_API_TOKEN, DEFAULT_PORT, PLATFORMS
+from .const import CONF_API_TOKEN, CONF_IP_ADDRESS, DEFAULT_PORT, PLATFORMS
 from .const import DOMAIN as DOMAIN
 from .coordinator import SpacePCDataUpdateCoordinator
+from .helpers import device_configuration_url
 from .models import DeviceInfo
 
 
@@ -41,11 +42,19 @@ def _create_client(hass: HomeAssistant, entry: SpacePCConfigEntry) -> SpacePCCli
 async def async_setup_entry(hass: HomeAssistant, entry: SpacePCConfigEntry) -> bool:
     """Set up SpacePC from a config entry."""
     client = _create_client(hass, entry)
+    configured_ip = entry.data.get(CONF_IP_ADDRESS)
+    current_ip = configured_ip if isinstance(configured_ip, str) else None
     try:
         device_info = await client.async_get_info()
     except SpacePCConnectionError as err:
         raise ConfigEntryNotReady from err
-    coordinator = SpacePCDataUpdateCoordinator(hass, client, device_info)
+    coordinator = SpacePCDataUpdateCoordinator(
+        hass,
+        client,
+        device_info,
+        ip_address=current_ip,
+        configuration_url=device_configuration_url(entry.data),
+    )
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = SpacePCRuntimeData(coordinator, device_info)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))

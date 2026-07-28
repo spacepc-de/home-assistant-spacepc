@@ -4,11 +4,20 @@ from __future__ import annotations
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import SpacePCConfigEntry
 from .entity import SpacePCEntity
 from .helpers import entities_for_platform
+from .models import EntityDefinition
+
+IP_ADDRESS_DEFINITION = EntityDefinition(
+    entity_id="ip_address",
+    name="IP address",
+    platform="sensor",
+    icon="mdi:ip-network",
+)
 
 
 async def async_setup_entry(
@@ -18,9 +27,12 @@ async def async_setup_entry(
 ) -> None:
     """Set up SpacePC sensors."""
     del hass
-    async_add_entities(
-        entities_for_platform(entry.runtime_data.coordinator, "sensor", SpacePCSensor)
-    )
+    coordinator = entry.runtime_data.coordinator
+    entities: list[SpacePCSensor | SpacePCIPAddressSensor] = [
+        *entities_for_platform(coordinator, "sensor", SpacePCSensor),
+        SpacePCIPAddressSensor(coordinator, IP_ADDRESS_DEFINITION),
+    ]
+    async_add_entities(entities)
 
 
 class SpacePCSensor(SpacePCEntity, SensorEntity):
@@ -57,3 +69,19 @@ class SpacePCSensor(SpacePCEntity, SensorEntity):
             return SensorStateClass(self.definition.state_class)
         except ValueError:
             return None
+
+
+class SpacePCIPAddressSensor(SpacePCEntity, SensorEntity):
+    """Diagnostic sensor showing the latest discovered device address."""
+
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the latest IP address announced over mDNS."""
+        return self.coordinator.ip_address
+
+    @property
+    def available(self) -> bool:
+        """Return whether an address is known and the device is reachable."""
+        return self.coordinator.last_update_success and bool(self.coordinator.ip_address)

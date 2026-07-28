@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ipaddress import ip_address
 from typing import Any
 
 import voluptuous as vol
@@ -16,7 +17,7 @@ from .api import (
     SpacePCConnectionError,
     SpacePCUnsupportedApiError,
 )
-from .const import CONF_API_TOKEN, DEFAULT_PORT, DOMAIN
+from .const import CONF_API_TOKEN, CONF_IP_ADDRESS, DEFAULT_PORT, DOMAIN
 from .models import DeviceInfo, SpacePCDataError
 
 
@@ -27,6 +28,7 @@ class SpacePCConfigFlow(ConfigFlow, domain=DOMAIN):
 
     def __init__(self) -> None:
         self._discovered_host: str | None = None
+        self._discovered_ip: str | None = None
         self._discovered_port = DEFAULT_PORT
         self._info: DeviceInfo | None = None
 
@@ -44,6 +46,7 @@ class SpacePCConfigFlow(ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="invalid_discovery")
 
         discovered_host = _discovery_host(discovery_info)
+        discovered_ip = str(discovery_info.ip_address)
         discovered_port = discovery_info.port or DEFAULT_PORT
         await self.async_set_unique_id(device_id)
         existing_entry = next(
@@ -58,6 +61,7 @@ class SpacePCConfigFlow(ConfigFlow, domain=DOMAIN):
             updated_data = {
                 **existing_entry.data,
                 CONF_HOST: discovered_host,
+                CONF_IP_ADDRESS: discovered_ip,
                 CONF_PORT: discovered_port,
             }
             if updated_data != existing_entry.data:
@@ -75,6 +79,7 @@ class SpacePCConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
         self._discovered_host = discovered_host
+        self._discovered_ip = discovered_ip
         self._discovered_port = discovered_port
         errors: dict[str, str] = {}
         try:
@@ -125,6 +130,7 @@ class SpacePCConfigFlow(ConfigFlow, domain=DOMAIN):
                     self._discovered_host,
                     self._discovered_port,
                     token,
+                    discovered_ip=self._discovered_ip,
                 )
 
         schema: dict[vol.Marker, type[str]] = {}
@@ -159,7 +165,12 @@ class SpacePCConfigFlow(ConfigFlow, domain=DOMAIN):
                 await self.async_set_unique_id(info.device_id)
                 self._abort_if_unique_id_configured(updates={CONF_HOST: host, CONF_PORT: port})
                 self._info = info
-                return self._async_create_device_entry(host, port, token)
+                return self._async_create_device_entry(
+                    host,
+                    port,
+                    token,
+                    discovered_ip=_literal_ip(host),
+                )
 
         return self.async_show_form(
             step_id="user",
@@ -195,10 +206,14 @@ class SpacePCConfigFlow(ConfigFlow, domain=DOMAIN):
         host: str,
         port: int,
         token: str | None,
+        *,
+        discovered_ip: str | None = None,
     ) -> ConfigFlowResult:
         if self._info is None:
             return self.async_abort(reason="cannot_connect")
         data: dict[str, Any] = {CONF_HOST: host, CONF_PORT: port}
+        if discovered_ip:
+            data[CONF_IP_ADDRESS] = discovered_ip
         if token:
             data[CONF_API_TOKEN] = token
         return self.async_create_entry(title=self._info.name, data=data)
@@ -208,3 +223,11 @@ def _discovery_host(discovery_info: ZeroconfServiceInfo) -> str:
     """Prefer the stable mDNS hostname over a DHCP address."""
     hostname = discovery_info.hostname.rstrip(".")
     return hostname or discovery_info.host
+
+
+def _literal_ip(host: str) -> str | None:
+    """Return a normalized IP when manual setup used a literal address."""
+    try:
+        return str(ip_address(host))
+    except ValueError:
+        return None
