@@ -21,6 +21,7 @@ device API contract are not yet stable. Do not treat it as production-ready.
 ## Features
 
 - automatic discovery via `_spacepc._tcp.local.`
+- automatic recovery after Wi-Fi reconnects or DHCP address changes
 - manual setup by hostname or IP address
 - sensors and binary sensors
 - switches, lights and fans
@@ -32,6 +33,11 @@ device API contract are not yet stable. Do not treat it as production-ready.
 The entities exposed for a device come from its API capabilities. A temperature
 sensor firmware therefore uses the same integration as a fan or e-paper
 project, without project-specific Home Assistant code.
+
+Discovered devices are stored by their stable mDNS hostname instead of their
+current DHCP address. If discovery updates connection data, the integration
+rebuilds its API client and requests fresh state without restarting Home
+Assistant.
 
 ## Installation for development
 

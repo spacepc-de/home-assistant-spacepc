@@ -43,11 +43,15 @@ class SpacePCConfigFlow(ConfigFlow, domain=DOMAIN):
         if not device_id:
             return self.async_abort(reason="invalid_discovery")
 
+        discovered_host = _discovery_host(discovery_info)
+        discovered_port = discovery_info.port or DEFAULT_PORT
         await self.async_set_unique_id(device_id)
-        self._abort_if_unique_id_configured(updates={CONF_HOST: discovery_info.host})
+        self._abort_if_unique_id_configured(
+            updates={CONF_HOST: discovered_host, CONF_PORT: discovered_port}
+        )
 
-        self._discovered_host = discovery_info.host
-        self._discovered_port = discovery_info.port or DEFAULT_PORT
+        self._discovered_host = discovered_host
+        self._discovered_port = discovered_port
         errors: dict[str, str] = {}
         try:
             self._info = await self._async_probe(
@@ -174,3 +178,9 @@ class SpacePCConfigFlow(ConfigFlow, domain=DOMAIN):
         if token:
             data[CONF_API_TOKEN] = token
         return self.async_create_entry(title=self._info.name, data=data)
+
+
+def _discovery_host(discovery_info: ZeroconfServiceInfo) -> str:
+    """Prefer the stable mDNS hostname over a DHCP address."""
+    hostname = discovery_info.hostname.rstrip(".")
+    return hostname or discovery_info.host
