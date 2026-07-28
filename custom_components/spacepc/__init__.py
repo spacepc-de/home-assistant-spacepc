@@ -27,20 +27,36 @@ class SpacePCRuntimeData:
 type SpacePCConfigEntry = ConfigEntry[SpacePCRuntimeData]
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: SpacePCConfigEntry) -> bool:
-    """Set up SpacePC from a config entry."""
-    client = SpacePCClient(
+def _create_client(hass: HomeAssistant, entry: SpacePCConfigEntry) -> SpacePCClient:
+    """Create a client from the current config entry connection data."""
+    return SpacePCClient(
         async_get_clientsession(hass),
         entry.data[CONF_HOST],
         entry.data.get(CONF_PORT, DEFAULT_PORT),
         entry.data.get(CONF_API_TOKEN),
     )
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: SpacePCConfigEntry) -> bool:
+    """Set up SpacePC from a config entry."""
+    client = _create_client(hass, entry)
     device_info = await client.async_get_info()
     coordinator = SpacePCDataUpdateCoordinator(hass, client, device_info)
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = SpacePCRuntimeData(coordinator, device_info)
+    entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
+
+
+async def _async_update_listener(
+    hass: HomeAssistant,
+    entry: SpacePCConfigEntry,
+) -> None:
+    """Apply a discovered host or port change without restarting Home Assistant."""
+    coordinator = entry.runtime_data.coordinator
+    coordinator.client = _create_client(hass, entry)
+    await coordinator.async_request_refresh()
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: SpacePCConfigEntry) -> bool:
