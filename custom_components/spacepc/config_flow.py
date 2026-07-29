@@ -22,6 +22,7 @@ from .api import (
 from .const import (
     CONF_API_TOKEN,
     CONF_DISPLAY_INTERVAL,
+    CONF_DISPLAY_TITLE,
     CONF_DISPLAY_WIDGETS,
     CONF_IP_ADDRESS,
     DEFAULT_DISPLAY_INTERVAL_SECONDS,
@@ -278,12 +279,22 @@ class SpacePCOptionsFlow(OptionsFlow):
                 title="",
                 data={
                     CONF_DISPLAY_INTERVAL: int(user_input[CONF_DISPLAY_INTERVAL]),
+                    CONF_DISPLAY_TITLE: user_input[CONF_DISPLAY_TITLE].strip(),
                     CONF_DISPLAY_WIDGETS: widgets,
                 },
             )
         existing = self.config_entry.options
         existing_widgets = existing.get(CONF_DISPLAY_WIDGETS, [])
         schema: dict[vol.Marker, object] = {
+            vol.Required(
+                CONF_DISPLAY_TITLE,
+                default=existing.get(CONF_DISPLAY_TITLE, "Home"),
+            ): selector.TextSelector(
+                selector.TextSelectorConfig(
+                    type=selector.TextSelectorType.TEXT,
+                    autocomplete="off",
+                )
+            ),
             vol.Required(
                 CONF_DISPLAY_INTERVAL,
                 default=existing.get(

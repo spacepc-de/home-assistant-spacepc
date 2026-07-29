@@ -37,6 +37,7 @@
         "title": "E-Paper-Display konfigurieren",
         "description": "Bearbeite hier alle sechs Display-Slots. Leere Slots werden ignoriert und das Raster passt sich automatisch an. Für dieses E-Paper mit Vollaktualisierung werden zehn Minuten empfohlen.",
         "data": {
+          "display_title": "Displaytitel",
           "display_interval": "Aktualisierungsintervall"
         },
         "sections": {
