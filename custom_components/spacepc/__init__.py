@@ -14,6 +14,7 @@ from .api import SpacePCClient, SpacePCConnectionError
 from .const import CONF_API_TOKEN, CONF_IP_ADDRESS, DEFAULT_PORT, PLATFORMS
 from .const import DOMAIN as DOMAIN
 from .coordinator import SpacePCDataUpdateCoordinator
+from .display import SpacePCDisplayManager
 from .helpers import device_configuration_url
 from .models import DeviceInfo
 
@@ -24,6 +25,7 @@ class SpacePCRuntimeData:
 
     coordinator: SpacePCDataUpdateCoordinator
     device_info: DeviceInfo
+    display_manager: SpacePCDisplayManager | None = None
 
 
 type SpacePCConfigEntry = ConfigEntry[SpacePCRuntimeData]
@@ -56,9 +58,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: SpacePCConfigEntry) -> b
         configuration_url=device_configuration_url(entry.data),
     )
     await coordinator.async_config_entry_first_refresh()
-    entry.runtime_data = SpacePCRuntimeData(coordinator, device_info)
+    display_manager = None
+    if device_info.display is not None:
+        display_manager = SpacePCDisplayManager(
+            hass,
+            client,
+            device_info.display,
+            dict(entry.options),
+        )
+    entry.runtime_data = SpacePCRuntimeData(coordinator, device_info, display_manager)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    if display_manager is not None and entry.options:
+        await display_manager.async_start()
     return True
 
 
@@ -72,4 +84,6 @@ async def _async_update_listener(
 
 async def async_unload_entry(hass: HomeAssistant, entry: SpacePCConfigEntry) -> bool:
     """Unload a SpacePC config entry."""
+    if entry.runtime_data.display_manager is not None:
+        entry.runtime_data.display_manager.async_stop()
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

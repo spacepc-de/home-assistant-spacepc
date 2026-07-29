@@ -72,6 +72,60 @@ Tokens must never appear in mDNS records, URLs, logs or diagnostics.
 Allowed platforms in API v1 are `sensor`, `binary_sensor`, `switch`, `light`,
 `fan` and `update`. Entity IDs must remain stable across restarts.
 
+Display devices add an optional capability object:
+
+```json
+{
+  "display": {
+    "width": 800,
+    "height": 480,
+    "max_widgets": 6,
+    "max_graph_points": 48,
+    "minimum_refresh_seconds": 60,
+    "widget_types": ["value", "status", "graph"]
+  }
+}
+```
+
+## Display layout
+
+`PUT /api/v1/display`
+
+Home Assistant sends a complete replacement layout. E-paper devices may accept
+the request immediately and coalesce it until their safe refresh interval has
+elapsed.
+
+```json
+{
+  "layout": {"columns": 2},
+  "widgets": [
+    {
+      "position": 0,
+      "type": "value",
+      "entity_id": "sensor.living_room_temperature",
+      "label": "Living room",
+      "value": "21.6",
+      "unit": "°C",
+      "available": true
+    },
+    {
+      "position": 1,
+      "type": "graph",
+      "entity_id": "sensor.outside_temperature",
+      "label": "Outside",
+      "value": "18.2",
+      "unit": "°C",
+      "available": true,
+      "points": [17.8, 18.0, 18.2]
+    }
+  ]
+}
+```
+
+Supported widget types are advertised by the device. Clients must not exceed
+`max_widgets` or `max_graph_points`. Successful validation returns `202
+Accepted`; invalid layouts return `400` or `422`.
+
 ## State
 
 `GET /api/v1/state`
@@ -148,4 +202,3 @@ Errors use JSON:
 
 Clients reject unsupported major `api_version` values. Additive fields may be
 introduced within API v1 and must be ignored by older clients.
-
