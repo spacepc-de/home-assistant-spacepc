@@ -97,7 +97,7 @@ elapsed.
 
 ```json
 {
-  "layout": {"columns": 2},
+  "layout": {"mode": "automatic"},
   "widgets": [
     {
       "position": 0,
@@ -125,6 +125,10 @@ elapsed.
 Supported widget types are advertised by the device. Clients must not exceed
 `max_widgets` or `max_graph_points`. Successful validation returns `202
 Accepted`; invalid layouts return `400` or `422`.
+
+In automatic mode the display chooses its grid from the number of populated
+widgets: one full-size tile, two half-width tiles, a 2 × 2 grid for three or
+four widgets, and a 3 × 2 grid for five or six widgets.
 
 ## State
 

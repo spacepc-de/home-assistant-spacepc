@@ -8,6 +8,7 @@ from typing import Any
 import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.const import CONF_HOST, CONF_PORT
+from homeassistant.data_entry_flow import section
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
@@ -20,7 +21,6 @@ from .api import (
 )
 from .const import (
     CONF_API_TOKEN,
-    CONF_DISPLAY_COLUMNS,
     CONF_DISPLAY_INTERVAL,
     CONF_DISPLAY_WIDGETS,
     CONF_IP_ADDRESS,
@@ -251,99 +251,88 @@ def _literal_ip(host: str) -> str | None:
 class SpacePCOptionsFlow(OptionsFlow):
     """Configure a SpacePC e-paper display."""
 
-    def __init__(self) -> None:
-        self._options: dict[str, Any] = {}
-        self._widgets: list[dict[str, Any]] = []
-
     async def async_step_init(
         self,
         user_input: dict[str, Any] | None = None,
     ) -> ConfigFlowResult:
-        """Configure the display grid and refresh interval."""
+        """Configure all display slots on one page."""
         runtime_data = getattr(self.config_entry, "runtime_data", None)
         device_info = getattr(runtime_data, "device_info", None)
         if device_info is None or device_info.display is None:
             return self.async_abort(reason="display_not_supported")
         if user_input is not None:
-            self._options = dict(user_input)
-            self._widgets = []
-            return await self.async_step_widget()
+            widgets = []
+            for slot_number in range(1, device_info.display.max_widgets + 1):
+                slot = user_input.get(f"slot_{slot_number}", {})
+                entity_id = slot.get("entity_id")
+                if not isinstance(entity_id, str) or not entity_id:
+                    continue
+                widgets.append(
+                    {
+                        "entity_id": entity_id,
+                        "type": slot.get("type", "value"),
+                        "label": slot.get("label", "").strip(),
+                    }
+                )
+            return self.async_create_entry(
+                title="",
+                data={
+                    CONF_DISPLAY_INTERVAL: int(user_input[CONF_DISPLAY_INTERVAL]),
+                    CONF_DISPLAY_WIDGETS: widgets,
+                },
+            )
         existing = self.config_entry.options
+        existing_widgets = existing.get(CONF_DISPLAY_WIDGETS, [])
+        schema: dict[vol.Marker, object] = {
+            vol.Required(
+                CONF_DISPLAY_INTERVAL,
+                default=existing.get(
+                    CONF_DISPLAY_INTERVAL,
+                    DEFAULT_DISPLAY_INTERVAL_SECONDS,
+                ),
+            ): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=[
+                        selector.SelectOptionDict(value="300", label="5 minutes"),
+                        selector.SelectOptionDict(value="600", label="10 minutes"),
+                        selector.SelectOptionDict(value="900", label="15 minutes"),
+                        selector.SelectOptionDict(value="1800", label="30 minutes"),
+                        selector.SelectOptionDict(value="3600", label="60 minutes"),
+                    ],
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                )
+            )
+        }
+        for slot_number in range(1, device_info.display.max_widgets + 1):
+            configured = (
+                existing_widgets[slot_number - 1]
+                if slot_number <= len(existing_widgets)
+                else {}
+            )
+            slot_schema: dict[vol.Marker, object] = {}
+            entity_id = configured.get("entity_id")
+            entity_marker = (
+                vol.Optional("entity_id", default=entity_id)
+                if isinstance(entity_id, str)
+                else vol.Optional("entity_id")
+            )
+            slot_schema[entity_marker] = selector.EntitySelector()
+            slot_schema[
+                vol.Required("type", default=configured.get("type", "value"))
+            ] = selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=list(device_info.display.widget_types),
+                    translation_key="display_widget_type",
+                )
+            )
+            slot_schema[
+                vol.Optional("label", default=configured.get("label", ""))
+            ] = str
+            schema[vol.Required(f"slot_{slot_number}")] = section(
+                vol.Schema(slot_schema),
+                {"collapsed": not bool(entity_id)},
+            )
         return self.async_show_form(
             step_id="init",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(
-                        CONF_DISPLAY_COLUMNS,
-                        default=existing.get(CONF_DISPLAY_COLUMNS, 2),
-                    ): vol.All(vol.Coerce(int), vol.Range(min=1, max=3)),
-                    vol.Required(
-                        CONF_DISPLAY_INTERVAL,
-                        default=existing.get(
-                            CONF_DISPLAY_INTERVAL,
-                            DEFAULT_DISPLAY_INTERVAL_SECONDS,
-                        ),
-                    ): selector.SelectSelector(
-                        selector.SelectSelectorConfig(
-                            options=[
-                                selector.SelectOptionDict(value="300", label="5 minutes"),
-                                selector.SelectOptionDict(value="600", label="10 minutes"),
-                                selector.SelectOptionDict(value="900", label="15 minutes"),
-                                selector.SelectOptionDict(value="1800", label="30 minutes"),
-                                selector.SelectOptionDict(value="3600", label="60 minutes"),
-                            ],
-                            mode=selector.SelectSelectorMode.DROPDOWN,
-                        )
-                    ),
-                }
-            ),
-        )
-
-    async def async_step_widget(
-        self,
-        user_input: dict[str, Any] | None = None,
-    ) -> ConfigFlowResult:
-        """Add one display widget at a time."""
-        capabilities = self.config_entry.runtime_data.device_info.display
-        if capabilities is None:
-            return self.async_abort(reason="display_not_supported")
-        if user_input is not None:
-            widget = {
-                "entity_id": user_input["entity_id"],
-                "type": user_input["type"],
-                "label": user_input.get("label", "").strip(),
-            }
-            self._widgets.append(widget)
-            if (
-                user_input.get("add_another", False)
-                and len(self._widgets) < capabilities.max_widgets
-            ):
-                return await self.async_step_widget()
-            self._options[CONF_DISPLAY_INTERVAL] = int(
-                self._options[CONF_DISPLAY_INTERVAL]
-            )
-            self._options[CONF_DISPLAY_WIDGETS] = self._widgets
-            return self.async_create_entry(title="", data=self._options)
-        return self.async_show_form(
-            step_id="widget",
-            data_schema=vol.Schema(
-                {
-                    vol.Required("entity_id"): selector.EntitySelector(),
-                    vol.Required("type", default="value"): selector.SelectSelector(
-                        selector.SelectSelectorConfig(
-                            options=list(capabilities.widget_types),
-                            translation_key="display_widget_type",
-                        )
-                    ),
-                    vol.Optional("label", default=""): str,
-                    vol.Optional(
-                        "add_another",
-                        default=len(self._widgets) + 1 < capabilities.max_widgets,
-                    ): bool,
-                }
-            ),
-            description_placeholders={
-                "position": str(len(self._widgets) + 1),
-                "maximum": str(capabilities.max_widgets),
-            },
+            data_schema=vol.Schema(schema),
         )

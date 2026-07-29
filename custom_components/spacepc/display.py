@@ -13,7 +13,6 @@ from homeassistant.helpers.event import async_track_state_change_event, async_tr
 
 from .api import SpacePCClient, SpacePCError
 from .const import (
-    CONF_DISPLAY_COLUMNS,
     CONF_DISPLAY_INTERVAL,
     CONF_DISPLAY_WIDGETS,
     DEFAULT_DISPLAY_INTERVAL_SECONDS,
@@ -133,9 +132,7 @@ class SpacePCDisplayManager:
         try:
             await self.client.async_update_display(
                 {
-                    "layout": {
-                        "columns": int(self.options.get(CONF_DISPLAY_COLUMNS, 2))
-                    },
+                    "layout": {"mode": "automatic"},
                     "widgets": widgets,
                 }
             )
