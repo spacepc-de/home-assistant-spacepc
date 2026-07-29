@@ -21,10 +21,12 @@ from .api import (
 )
 from .const import (
     CONF_API_TOKEN,
+    CONF_DISPLAY_HISTORY_DAYS,
     CONF_DISPLAY_INTERVAL,
     CONF_DISPLAY_TITLE,
     CONF_DISPLAY_WIDGETS,
     CONF_IP_ADDRESS,
+    DEFAULT_DISPLAY_HISTORY_DAYS,
     DEFAULT_DISPLAY_INTERVAL_SECONDS,
     DEFAULT_PORT,
     DOMAIN,
@@ -279,6 +281,9 @@ class SpacePCOptionsFlow(OptionsFlow):
                 title="",
                 data={
                     CONF_DISPLAY_INTERVAL: int(user_input[CONF_DISPLAY_INTERVAL]),
+                    CONF_DISPLAY_HISTORY_DAYS: int(
+                        user_input[CONF_DISPLAY_HISTORY_DAYS]
+                    ),
                     CONF_DISPLAY_TITLE: user_input[CONF_DISPLAY_TITLE].strip(),
                     CONF_DISPLAY_WIDGETS: widgets,
                 },
@@ -312,7 +317,25 @@ class SpacePCOptionsFlow(OptionsFlow):
                     ],
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
-            )
+            ),
+            vol.Required(
+                CONF_DISPLAY_HISTORY_DAYS,
+                default=existing.get(
+                    CONF_DISPLAY_HISTORY_DAYS,
+                    DEFAULT_DISPLAY_HISTORY_DAYS,
+                ),
+            ): selector.SelectSelector(
+                selector.SelectSelectorConfig(
+                    options=[
+                        selector.SelectOptionDict(value="1", label="1 day"),
+                        selector.SelectOptionDict(value="2", label="2 days"),
+                        selector.SelectOptionDict(value="5", label="5 days"),
+                        selector.SelectOptionDict(value="14", label="14 days"),
+                        selector.SelectOptionDict(value="30", label="30 days"),
+                    ],
+                    mode=selector.SelectSelectorMode.DROPDOWN,
+                )
+            ),
         }
         for slot_number in range(1, device_info.display.max_widgets + 1):
             configured = (

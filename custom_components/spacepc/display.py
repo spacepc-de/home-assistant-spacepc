@@ -10,6 +10,7 @@ from functools import partial
 from typing import Any
 
 from homeassistant.components.recorder.history import get_significant_states
+from homeassistant.components.recorder.statistics import statistics_during_period
 from homeassistant.core import Event, HomeAssistant
 from homeassistant.helpers.event import async_track_state_change_event, async_track_time_interval
 from homeassistant.helpers.recorder import get_instance
@@ -17,10 +18,13 @@ from homeassistant.util import dt as dt_util
 
 from .api import SpacePCClient, SpacePCError
 from .const import (
+    CONF_DISPLAY_HISTORY_DAYS,
     CONF_DISPLAY_INTERVAL,
     CONF_DISPLAY_TITLE,
     CONF_DISPLAY_WIDGETS,
+    DEFAULT_DISPLAY_HISTORY_DAYS,
     DEFAULT_DISPLAY_INTERVAL_SECONDS,
+    DISPLAY_HISTORY_DAY_OPTIONS,
 )
 from .models import DisplayCapabilities
 
@@ -87,6 +91,23 @@ class SpacePCDisplayManager:
         widgets = self.options.get(CONF_DISPLAY_WIDGETS, [])
         return widgets if isinstance(widgets, list) else []
 
+    @property
+    def _history_days(self) -> int:
+        try:
+            history_days = int(
+                self.options.get(
+                    CONF_DISPLAY_HISTORY_DAYS,
+                    DEFAULT_DISPLAY_HISTORY_DAYS,
+                )
+            )
+        except (TypeError, ValueError):
+            return DEFAULT_DISPLAY_HISTORY_DAYS
+        return (
+            history_days
+            if history_days in DISPLAY_HISTORY_DAY_OPTIONS
+            else DEFAULT_DISPLAY_HISTORY_DAYS
+        )
+
     async def _async_state_changed(self, event: Event[Any]) -> None:
         self._sample_entity(event.data["entity_id"])
 
@@ -100,7 +121,7 @@ class SpacePCDisplayManager:
                 self._sample_entity(widget.get("entity_id"))
 
     async def _async_load_graph_history(self) -> None:
-        """Seed graph widgets from the last 24 hours of recorder history."""
+        """Seed graphs from recorder history or long-term statistics."""
         entity_ids = {
             widget["entity_id"]
             for widget in self._widgets
@@ -109,13 +130,47 @@ class SpacePCDisplayManager:
         }
         if not entity_ids:
             return
+        start_time = dt_util.utcnow() - timedelta(days=self._history_days)
+        remaining_entity_ids = set(entity_ids)
         try:
+            if self._history_days >= 14:
+                statistics = await get_instance(
+                    self.hass
+                ).async_add_executor_job(
+                    partial(
+                        statistics_during_period,
+                        self.hass,
+                        start_time,
+                        None,
+                        entity_ids,
+                        "hour",
+                        None,
+                        {"mean", "state"},
+                    )
+                )
+                for entity_id, rows in statistics.items():
+                    statistic_values = []
+                    for row in rows:
+                        value = (
+                            row["mean"]
+                            if row["mean"] is not None
+                            else row["state"]
+                        )
+                        if value is not None:
+                            statistic_values.append(value)
+                    if statistic_values:
+                        self._history[entity_id].extend(
+                            self._downsample(statistic_values)
+                        )
+                        remaining_entity_ids.discard(entity_id)
+            if not remaining_entity_ids:
+                return
             states_by_entity = await get_instance(self.hass).async_add_executor_job(
                 partial(
                     get_significant_states,
                     self.hass,
-                    dt_util.utcnow() - timedelta(hours=24),
-                    entity_ids=list(entity_ids),
+                    start_time,
+                    entity_ids=list(remaining_entity_ids),
                     significant_changes_only=False,
                     no_attributes=True,
                 )
@@ -124,27 +179,28 @@ class SpacePCDisplayManager:
             return
 
         for entity_id, states in states_by_entity.items():
-            values: list[float] = []
+            history_values: list[float] = []
             for state in states:
                 if not hasattr(state, "state"):
                     continue
                 try:
-                    values.append(float(state.state))
+                    history_values.append(float(state.state))
                 except ValueError:
                     continue
-            if len(values) > self.capabilities.max_graph_points:
-                last_index = len(values) - 1
-                values = [
-                    values[
-                        round(
-                            index
-                            * last_index
-                            / (self.capabilities.max_graph_points - 1)
-                        )
-                    ]
-                    for index in range(self.capabilities.max_graph_points)
-                ]
-            self._history[entity_id].extend(values)
+            self._history[entity_id].extend(self._downsample(history_values))
+
+    def _downsample(self, values: list[float]) -> list[float]:
+        """Evenly reduce historical values to the display's point limit."""
+        point_limit = self.capabilities.max_graph_points
+        if len(values) <= point_limit:
+            return values
+        if point_limit == 1:
+            return [values[-1]]
+        last_index = len(values) - 1
+        return [
+            values[round(index * last_index / (point_limit - 1))]
+            for index in range(point_limit)
+        ]
 
     def _sample_entity(self, entity_id: object) -> None:
         if not isinstance(entity_id, str):
@@ -181,6 +237,7 @@ class SpacePCDisplayManager:
             }
             if widget_type == "graph":
                 widget["points"] = list(self._history[entity_id])
+                widget["history_days"] = self._history_days
             widgets.append(widget)
         try:
             await self.client.async_update_display(

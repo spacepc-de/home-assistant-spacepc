@@ -38,7 +38,8 @@
         "description": "Bearbeite hier alle sechs Display-Slots. Leere Slots werden ignoriert und das Raster passt sich automatisch an. Für dieses E-Paper mit Vollaktualisierung werden zehn Minuten empfohlen.",
         "data": {
           "display_title": "Displaytitel",
-          "display_interval": "Aktualisierungsintervall"
+          "display_interval": "Aktualisierungsintervall",
+          "display_history_days": "Graph-Zeitraum"
         },
         "sections": {
           "slot_1": {"name": "Slot 1", "data": {"entity_id": "Entität", "type": "Widget-Typ", "label": "Beschriftung (optional)"}},
