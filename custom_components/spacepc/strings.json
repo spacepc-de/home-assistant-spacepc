@@ -30,6 +30,39 @@
       "invalid_discovery": "The discovery information is incomplete.",
       "unsupported_api": "This device uses an unsupported SpacePC API version."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Configure e-paper display",
+        "description": "Choose the grid and refresh interval. Ten minutes is recommended for this full-refresh e-paper panel.",
+        "data": {
+          "display_columns": "Columns",
+          "display_interval": "Refresh interval"
+        }
+      },
+      "widget": {
+        "title": "Add display widget",
+        "description": "Configure widget {position} of up to {maximum}. Graph history is collected locally while Home Assistant is running.",
+        "data": {
+          "entity_id": "Home Assistant entity",
+          "type": "Widget type",
+          "label": "Label (optional)",
+          "add_another": "Add another widget"
+        }
+      }
+    },
+    "abort": {
+      "display_not_supported": "This SpacePC device does not advertise display support."
+    }
+  },
+  "selector": {
+    "display_widget_type": {
+      "options": {
+        "value": "Value",
+        "status": "Status indicator",
+        "graph": "Graph"
+      }
+    }
   }
 }
-

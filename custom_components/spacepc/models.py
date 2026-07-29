@@ -33,6 +33,18 @@ class EntityDefinition:
 
 
 @dataclass(frozen=True, slots=True)
+class DisplayCapabilities:
+    """Display capabilities advertised by a SpacePC device."""
+
+    width: int
+    height: int
+    max_widgets: int
+    max_graph_points: int
+    minimum_refresh_seconds: int
+    widget_types: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class DeviceInfo:
     """Static device information."""
 
@@ -45,6 +57,7 @@ class DeviceInfo:
     firmware: FirmwareInfo
     auth_required: bool
     entities: tuple[EntityDefinition, ...]
+    display: DisplayCapabilities | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,6 +119,7 @@ def parse_device_info(payload: object) -> DeviceInfo:
             )
         )
 
+    display = _parse_display_capabilities(data.get("display"))
     return DeviceInfo(
         api_version=api_version,
         device_id=_require_string(data, "device_id"),
@@ -120,6 +134,7 @@ def parse_device_info(payload: object) -> DeviceInfo:
         ),
         auth_required=bool(data.get("auth_required", False)),
         entities=tuple(entities),
+        display=display,
     )
 
 
@@ -146,3 +161,32 @@ def parse_device_state(payload: object) -> DeviceState:
 
 def _optional_string(value: object) -> str | None:
     return value if isinstance(value, str) and value else None
+
+
+def _parse_display_capabilities(value: object) -> DisplayCapabilities | None:
+    if value is None:
+        return None
+    data = _require_mapping(value, "display")
+    widget_types = data.get("widget_types")
+    if not isinstance(widget_types, list) or not all(
+        isinstance(widget_type, str) for widget_type in widget_types
+    ):
+        raise SpacePCDataError("display.widget_types must be an array of strings")
+    return DisplayCapabilities(
+        width=_require_positive_int(data, "width"),
+        height=_require_positive_int(data, "height"),
+        max_widgets=_require_positive_int(data, "max_widgets"),
+        max_graph_points=_require_positive_int(data, "max_graph_points"),
+        minimum_refresh_seconds=_require_positive_int(
+            data, "minimum_refresh_seconds"
+        ),
+        widget_types=tuple(widget_types),
+    )
+
+
+def _require_positive_int(data: dict[str, Any], field_name: str) -> int:
+    value = data.get(field_name)
+    if not isinstance(value, int) or value <= 0:
+        msg = f"display.{field_name} must be a positive integer"
+        raise SpacePCDataError(msg)
+    return value

@@ -30,6 +30,39 @@
       "invalid_discovery": "Die Erkennungsdaten sind unvollständig.",
       "unsupported_api": "Dieses Gerät verwendet eine nicht unterstützte SpacePC-API-Version."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "E-Paper-Display konfigurieren",
+        "description": "Wähle Raster und Aktualisierungsintervall. Für dieses E-Paper mit Vollaktualisierung werden zehn Minuten empfohlen.",
+        "data": {
+          "display_columns": "Spalten",
+          "display_interval": "Aktualisierungsintervall"
+        }
+      },
+      "widget": {
+        "title": "Display-Widget hinzufügen",
+        "description": "Konfiguriere Widget {position} von maximal {maximum}. Graphdaten werden lokal gesammelt, solange Home Assistant läuft.",
+        "data": {
+          "entity_id": "Home-Assistant-Entität",
+          "type": "Widget-Typ",
+          "label": "Beschriftung (optional)",
+          "add_another": "Weiteres Widget hinzufügen"
+        }
+      }
+    },
+    "abort": {
+      "display_not_supported": "Dieses SpacePC-Gerät meldet keine Display-Unterstützung."
+    }
+  },
+  "selector": {
+    "display_widget_type": {
+      "options": {
+        "value": "Wert",
+        "status": "Statusanzeige",
+        "graph": "Graph"
+      }
+    }
   }
 }
-

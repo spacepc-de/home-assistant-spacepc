@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from ipaddress import IPv4Address
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from homeassistant.config_entries import SOURCE_USER, SOURCE_ZEROCONF
@@ -12,7 +14,14 @@ from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.spacepc.const import CONF_IP_ADDRESS, DOMAIN
+from custom_components.spacepc.const import (
+    CONF_DISPLAY_COLUMNS,
+    CONF_DISPLAY_INTERVAL,
+    CONF_DISPLAY_WIDGETS,
+    CONF_IP_ADDRESS,
+    DOMAIN,
+)
+from custom_components.spacepc.models import DeviceInfo, DisplayCapabilities
 
 
 async def test_manual_config_flow(
@@ -176,3 +185,61 @@ async def test_rediscovery_reloads_unchanged_device_capabilities(
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "already_configured"
     async_reload.assert_called_once_with(entry.entry_id)
+
+
+async def test_display_options_flow(
+    hass: HomeAssistant,
+    device_info: DeviceInfo,
+) -> None:
+    """A display can be configured with an entity, widget and safe interval."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="spacepc-display",
+        data={CONF_HOST: "spacepc-display.local", CONF_PORT: 80},
+    )
+    entry.runtime_data = SimpleNamespace(
+        device_info=replace(
+            device_info,
+            display=DisplayCapabilities(
+                width=800,
+                height=480,
+                max_widgets=6,
+                max_graph_points=48,
+                minimum_refresh_seconds=300,
+                widget_types=("value", "status", "graph"),
+            ),
+        )
+    )
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "init"
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {CONF_DISPLAY_COLUMNS: 2, CONF_DISPLAY_INTERVAL: "600"},
+    )
+    assert result["step_id"] == "widget"
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            "entity_id": "sensor.living_room_temperature",
+            "type": "graph",
+            "label": "Living room",
+            "add_another": False,
+        },
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["data"] == {
+        CONF_DISPLAY_COLUMNS: 2,
+        CONF_DISPLAY_INTERVAL: 600,
+        CONF_DISPLAY_WIDGETS: [
+            {
+                "entity_id": "sensor.living_room_temperature",
+                "type": "graph",
+                "label": "Living room",
+            }
+        ],
+    }

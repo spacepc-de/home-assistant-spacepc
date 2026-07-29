@@ -29,12 +29,20 @@ Version 0.1.x is the first stable SpacePC Local API v1 integration series.
 - switches, lights and fans
 - device and connection diagnostics
 - firmware update entities
+- configurable e-paper dashboards with value, status and graph widgets
+- selectable 5, 10, 15, 30 or 60 minute display refresh interval
 - optional bearer-token authentication
 - English and German setup text
 
 The entities exposed for a device come from its API capabilities. A temperature
 sensor firmware therefore uses the same integration as a fan or e-paper
 project, without project-specific Home Assistant code.
+
+Display-capable firmware advertises its dimensions and widget limits through
+the same API. Use **Configure** on the SpacePC device to select Home Assistant
+entities, choose their widget types and set the grid. Ten minutes is the
+recommended default for the supported full-refresh e-paper panel. Graph samples
+are kept locally in memory while Home Assistant is running.
 
 Discovered devices are stored by their stable mDNS hostname instead of their
 current DHCP address. If discovery updates connection data, the integration

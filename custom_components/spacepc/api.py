@@ -76,6 +76,15 @@ class SpacePCClient:
             expect_json=False,
         )
 
+    async def async_update_display(self, payload: dict[str, Any]) -> None:
+        """Send a Home Assistant widget layout to a display device."""
+        await self._async_request(
+            "PUT",
+            "/display",
+            json=payload,
+            expect_json=False,
+        )
+
     async def _async_request(
         self,
         method: str,
