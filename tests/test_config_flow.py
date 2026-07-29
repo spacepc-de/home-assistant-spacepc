@@ -15,7 +15,6 @@ from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.spacepc.const import (
-    CONF_DISPLAY_COLUMNS,
     CONF_DISPLAY_INTERVAL,
     CONF_DISPLAY_WIDGETS,
     CONF_IP_ADDRESS,
@@ -218,22 +217,22 @@ async def test_display_options_flow(
 
     result = await hass.config_entries.options.async_configure(
         result["flow_id"],
-        {CONF_DISPLAY_COLUMNS: 2, CONF_DISPLAY_INTERVAL: "600"},
-    )
-    assert result["step_id"] == "widget"
-
-    result = await hass.config_entries.options.async_configure(
-        result["flow_id"],
         {
-            "entity_id": "sensor.living_room_temperature",
-            "type": "graph",
-            "label": "Living room",
-            "add_another": False,
+            CONF_DISPLAY_INTERVAL: "600",
+            "slot_1": {
+                "entity_id": "sensor.living_room_temperature",
+                "type": "graph",
+                "label": "Living room",
+            },
+            "slot_2": {"type": "value", "label": ""},
+            "slot_3": {"type": "value", "label": ""},
+            "slot_4": {"type": "value", "label": ""},
+            "slot_5": {"type": "value", "label": ""},
+            "slot_6": {"type": "value", "label": ""},
         },
     )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["data"] == {
-        CONF_DISPLAY_COLUMNS: 2,
         CONF_DISPLAY_INTERVAL: 600,
         CONF_DISPLAY_WIDGETS: [
             {

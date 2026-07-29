@@ -35,20 +35,17 @@
     "step": {
       "init": {
         "title": "Configure e-paper display",
-        "description": "Choose the grid and refresh interval. Ten minutes is recommended for this full-refresh e-paper panel.",
+        "description": "Edit all six display slots here. Empty slots are ignored and the grid adapts automatically. Ten minutes is recommended for this full-refresh e-paper panel.",
         "data": {
-          "display_columns": "Columns",
           "display_interval": "Refresh interval"
-        }
-      },
-      "widget": {
-        "title": "Add display widget",
-        "description": "Configure widget {position} of up to {maximum}. Graph history is collected locally while Home Assistant is running.",
-        "data": {
-          "entity_id": "Home Assistant entity",
-          "type": "Widget type",
-          "label": "Label (optional)",
-          "add_another": "Add another widget"
+        },
+        "sections": {
+          "slot_1": {"name": "Slot 1", "data": {"entity_id": "Entity", "type": "Widget type", "label": "Label (optional)"}},
+          "slot_2": {"name": "Slot 2", "data": {"entity_id": "Entity", "type": "Widget type", "label": "Label (optional)"}},
+          "slot_3": {"name": "Slot 3", "data": {"entity_id": "Entity", "type": "Widget type", "label": "Label (optional)"}},
+          "slot_4": {"name": "Slot 4", "data": {"entity_id": "Entity", "type": "Widget type", "label": "Label (optional)"}},
+          "slot_5": {"name": "Slot 5", "data": {"entity_id": "Entity", "type": "Widget type", "label": "Label (optional)"}},
+          "slot_6": {"name": "Slot 6", "data": {"entity_id": "Entity", "type": "Widget type", "label": "Label (optional)"}}
         }
       }
     },

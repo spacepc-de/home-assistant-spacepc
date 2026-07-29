@@ -40,9 +40,11 @@ project, without project-specific Home Assistant code.
 
 Display-capable firmware advertises its dimensions and widget limits through
 the same API. Use **Configure** on the SpacePC device to select Home Assistant
-entities, choose their widget types and set the grid. Ten minutes is the
-recommended default for the supported full-refresh e-paper panel. Graph samples
-are kept locally in memory while Home Assistant is running.
+entities and choose their widget types in one six-slot editor. Empty slots are
+ignored; the display automatically uses one full tile, two halves, four
+quarters or six tiles. Ten minutes is the recommended default for the supported
+full-refresh e-paper panel. Graph samples are kept locally in memory while Home
+Assistant is running.
 
 Discovered devices are stored by their stable mDNS hostname instead of their
 current DHCP address. If discovery updates connection data, the integration

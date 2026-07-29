@@ -35,20 +35,17 @@
     "step": {
       "init": {
         "title": "E-Paper-Display konfigurieren",
-        "description": "Wähle Raster und Aktualisierungsintervall. Für dieses E-Paper mit Vollaktualisierung werden zehn Minuten empfohlen.",
+        "description": "Bearbeite hier alle sechs Display-Slots. Leere Slots werden ignoriert und das Raster passt sich automatisch an. Für dieses E-Paper mit Vollaktualisierung werden zehn Minuten empfohlen.",
         "data": {
-          "display_columns": "Spalten",
           "display_interval": "Aktualisierungsintervall"
-        }
-      },
-      "widget": {
-        "title": "Display-Widget hinzufügen",
-        "description": "Konfiguriere Widget {position} von maximal {maximum}. Graphdaten werden lokal gesammelt, solange Home Assistant läuft.",
-        "data": {
-          "entity_id": "Home-Assistant-Entität",
-          "type": "Widget-Typ",
-          "label": "Beschriftung (optional)",
-          "add_another": "Weiteres Widget hinzufügen"
+        },
+        "sections": {
+          "slot_1": {"name": "Slot 1", "data": {"entity_id": "Entität", "type": "Widget-Typ", "label": "Beschriftung (optional)"}},
+          "slot_2": {"name": "Slot 2", "data": {"entity_id": "Entität", "type": "Widget-Typ", "label": "Beschriftung (optional)"}},
+          "slot_3": {"name": "Slot 3", "data": {"entity_id": "Entität", "type": "Widget-Typ", "label": "Beschriftung (optional)"}},
+          "slot_4": {"name": "Slot 4", "data": {"entity_id": "Entität", "type": "Widget-Typ", "label": "Beschriftung (optional)"}},
+          "slot_5": {"name": "Slot 5", "data": {"entity_id": "Entität", "type": "Widget-Typ", "label": "Beschriftung (optional)"}},
+          "slot_6": {"name": "Slot 6", "data": {"entity_id": "Entität", "type": "Widget-Typ", "label": "Beschriftung (optional)"}}
         }
       }
     },

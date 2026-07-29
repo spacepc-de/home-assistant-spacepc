@@ -11,7 +11,6 @@ SUPPORTED_API_VERSION: Final = 1
 
 CONF_API_TOKEN: Final = "api_token"
 CONF_IP_ADDRESS: Final = "ip_address"
-CONF_DISPLAY_COLUMNS: Final = "display_columns"
 CONF_DISPLAY_INTERVAL: Final = "display_interval"
 CONF_DISPLAY_WIDGETS: Final = "display_widgets"
 DEFAULT_DISPLAY_INTERVAL_SECONDS: Final = 600
