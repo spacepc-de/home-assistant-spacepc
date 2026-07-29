@@ -15,6 +15,7 @@ from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.spacepc.const import (
+    CONF_DISPLAY_HISTORY_DAYS,
     CONF_DISPLAY_INTERVAL,
     CONF_DISPLAY_TITLE,
     CONF_DISPLAY_WIDGETS,
@@ -220,6 +221,7 @@ async def test_display_options_flow(
         result["flow_id"],
         {
             CONF_DISPLAY_INTERVAL: "600",
+            CONF_DISPLAY_HISTORY_DAYS: "14",
             CONF_DISPLAY_TITLE: "Living room",
             "slot_1": {
                 "entity_id": "sensor.living_room_temperature",
@@ -236,6 +238,7 @@ async def test_display_options_flow(
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["data"] == {
         CONF_DISPLAY_INTERVAL: 600,
+        CONF_DISPLAY_HISTORY_DAYS: 14,
         CONF_DISPLAY_TITLE: "Living room",
         CONF_DISPLAY_WIDGETS: [
             {

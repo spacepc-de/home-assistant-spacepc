@@ -44,7 +44,7 @@ entities and choose their widget types in one six-slot editor. Empty slots are
 ignored; the display automatically uses one full tile, two halves, four
 quarters or six tiles. A custom dashboard title can be shown beside the local
 time of the latest Home Assistant update. Ten minutes is the recommended default for the supported
-full-refresh e-paper panel. Graph widgets are seeded from the last 24 hours of
+full-refresh e-paper panel. Graph widgets can use 1, 2, 5, 14 or 30 days of
 Home Assistant recorder history and continue collecting new samples in memory.
 
 Discovered devices are stored by their stable mDNS hostname instead of their

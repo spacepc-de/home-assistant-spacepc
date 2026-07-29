@@ -12,9 +12,12 @@ SUPPORTED_API_VERSION: Final = 1
 CONF_API_TOKEN: Final = "api_token"
 CONF_IP_ADDRESS: Final = "ip_address"
 CONF_DISPLAY_INTERVAL: Final = "display_interval"
+CONF_DISPLAY_HISTORY_DAYS: Final = "display_history_days"
 CONF_DISPLAY_TITLE: Final = "display_title"
 CONF_DISPLAY_WIDGETS: Final = "display_widgets"
 DEFAULT_DISPLAY_INTERVAL_SECONDS: Final = 600
+DEFAULT_DISPLAY_HISTORY_DAYS: Final = 1
+DISPLAY_HISTORY_DAY_OPTIONS: Final = (1, 2, 5, 14, 30)
 
 PLATFORMS: Final = (
     Platform.SENSOR,
