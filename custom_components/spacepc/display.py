@@ -6,14 +6,19 @@ from collections import defaultdict, deque
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import timedelta
+from functools import partial
 from typing import Any
 
+from homeassistant.components.recorder.history import get_significant_states
 from homeassistant.core import Event, HomeAssistant
 from homeassistant.helpers.event import async_track_state_change_event, async_track_time_interval
+from homeassistant.helpers.recorder import get_instance
+from homeassistant.util import dt as dt_util
 
 from .api import SpacePCClient, SpacePCError
 from .const import (
     CONF_DISPLAY_INTERVAL,
+    CONF_DISPLAY_TITLE,
     CONF_DISPLAY_WIDGETS,
     DEFAULT_DISPLAY_INTERVAL_SECONDS,
 )
@@ -67,6 +72,7 @@ class SpacePCDisplayManager:
                 timedelta(seconds=interval),
             )
         )
+        await self._async_load_graph_history()
         self._sample_graphs()
         await self._async_push()
 
@@ -92,6 +98,53 @@ class SpacePCDisplayManager:
         for widget in self._widgets:
             if widget.get("type") == "graph":
                 self._sample_entity(widget.get("entity_id"))
+
+    async def _async_load_graph_history(self) -> None:
+        """Seed graph widgets from the last 24 hours of recorder history."""
+        entity_ids = {
+            widget["entity_id"]
+            for widget in self._widgets
+            if widget.get("type") == "graph"
+            and isinstance(widget.get("entity_id"), str)
+        }
+        if not entity_ids:
+            return
+        try:
+            states_by_entity = await get_instance(self.hass).async_add_executor_job(
+                partial(
+                    get_significant_states,
+                    self.hass,
+                    dt_util.utcnow() - timedelta(hours=24),
+                    entity_ids=list(entity_ids),
+                    significant_changes_only=False,
+                    no_attributes=True,
+                )
+            )
+        except KeyError:
+            return
+
+        for entity_id, states in states_by_entity.items():
+            values: list[float] = []
+            for state in states:
+                if not hasattr(state, "state"):
+                    continue
+                try:
+                    values.append(float(state.state))
+                except ValueError:
+                    continue
+            if len(values) > self.capabilities.max_graph_points:
+                last_index = len(values) - 1
+                values = [
+                    values[
+                        round(
+                            index
+                            * last_index
+                            / (self.capabilities.max_graph_points - 1)
+                        )
+                    ]
+                    for index in range(self.capabilities.max_graph_points)
+                ]
+            self._history[entity_id].extend(values)
 
     def _sample_entity(self, entity_id: object) -> None:
         if not isinstance(entity_id, str):
@@ -132,7 +185,13 @@ class SpacePCDisplayManager:
         try:
             await self.client.async_update_display(
                 {
-                    "layout": {"mode": "automatic"},
+                    "layout": {
+                        "mode": "automatic",
+                        "title": self.options.get(CONF_DISPLAY_TITLE, "Home"),
+                        "updated_at": dt_util.as_local(dt_util.utcnow()).strftime(
+                            "%H:%M"
+                        ),
+                    },
                     "widgets": widgets,
                 }
             )

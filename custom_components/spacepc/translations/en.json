@@ -37,6 +37,7 @@
         "title": "Configure e-paper display",
         "description": "Edit all six display slots here. Empty slots are ignored and the grid adapts automatically. Ten minutes is recommended for this full-refresh e-paper panel.",
         "data": {
+          "display_title": "Display title",
           "display_interval": "Refresh interval"
         },
         "sections": {
