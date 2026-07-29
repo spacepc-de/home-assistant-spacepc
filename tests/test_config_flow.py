@@ -197,6 +197,18 @@ async def test_display_options_flow(
         domain=DOMAIN,
         unique_id="spacepc-display",
         data={CONF_HOST: "spacepc-display.local", CONF_PORT: 80},
+        options={
+            CONF_DISPLAY_INTERVAL: 600,
+            CONF_DISPLAY_HISTORY_DAYS: 14,
+            CONF_DISPLAY_TITLE: "Living room",
+            CONF_DISPLAY_WIDGETS: [
+                {
+                    "entity_id": "sensor.living_room_temperature",
+                    "type": "graph",
+                    "label": "Living room",
+                }
+            ],
+        },
     )
     entry.runtime_data = SimpleNamespace(
         device_info=replace(
@@ -216,6 +228,17 @@ async def test_display_options_flow(
     result = await hass.config_entries.options.async_init(entry.entry_id)
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "init"
+    defaults = {
+        marker.schema: marker.default()
+        for marker in result["data_schema"].schema
+        if marker.schema
+        in {
+            CONF_DISPLAY_INTERVAL,
+            CONF_DISPLAY_HISTORY_DAYS,
+        }
+    }
+    assert defaults[CONF_DISPLAY_INTERVAL] == "600"
+    assert defaults[CONF_DISPLAY_HISTORY_DAYS] == "14"
 
     result = await hass.config_entries.options.async_configure(
         result["flow_id"],

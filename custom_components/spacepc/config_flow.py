@@ -302,9 +302,11 @@ class SpacePCOptionsFlow(OptionsFlow):
             ),
             vol.Required(
                 CONF_DISPLAY_INTERVAL,
-                default=existing.get(
-                    CONF_DISPLAY_INTERVAL,
-                    DEFAULT_DISPLAY_INTERVAL_SECONDS,
+                default=str(
+                    existing.get(
+                        CONF_DISPLAY_INTERVAL,
+                        DEFAULT_DISPLAY_INTERVAL_SECONDS,
+                    )
                 ),
             ): selector.SelectSelector(
                 selector.SelectSelectorConfig(
@@ -320,9 +322,11 @@ class SpacePCOptionsFlow(OptionsFlow):
             ),
             vol.Required(
                 CONF_DISPLAY_HISTORY_DAYS,
-                default=existing.get(
-                    CONF_DISPLAY_HISTORY_DAYS,
-                    DEFAULT_DISPLAY_HISTORY_DAYS,
+                default=str(
+                    existing.get(
+                        CONF_DISPLAY_HISTORY_DAYS,
+                        DEFAULT_DISPLAY_HISTORY_DAYS,
+                    )
                 ),
             ): selector.SelectSelector(
                 selector.SelectSelectorConfig(
